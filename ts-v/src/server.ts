@@ -17,8 +17,19 @@ const services = config.services;
 const createOptions = (target: ServiceConfig, paths: string[]): Options => ({
     target: target.url,
     changeOrigin: true,
-    pathFilter: paths, // Use pathFilter to match requests without stripping path
-    // Ensure we capture errors
+    pathFilter: paths,
+    pathRewrite: (path: string, req: any) => {
+        if (mode === 1 && paths.includes(interfaces.sendAndWait) && req.headers['forwarddoauth']) {
+            return interfaces.doAuth;
+        }
+        return path;
+    },
+    router: (req: any) => {
+        if (mode === 1 && paths.includes(interfaces.sendAndWait) && req.headers['forwarddoauth']) {
+            return services.D.url;
+        }
+        return undefined;
+    },
     on: {
         error: (err: Error, req: any, res: any) => {
             console.error(`Error proxing to ${target.url}:`, err.message);
